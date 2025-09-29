@@ -1,0 +1,105 @@
+#include "/Engine/Private/VertexFactoryCommon.ush"
+
+/*
+ * Vertex Shader需要使用相关结构体实现
+ */
+struct FVertexFactoryInput
+{
+	float4 Position : ATTRIBUTE0;
+	/** Unique Vertex ID **/
+	uint VertexId : SV_VertexID;
+	/** This doesn`t use instance **/
+	uint InstanceId	: SV_InstanceID;
+};
+
+// VS to PS 插值数据
+struct FVertexFactoryInterpolantsVSToPS 
+{
+	/** Dummy value to interpolate **/
+	float2	DummyTexCoord : TEXCOORD0;
+
+	half4 Color : COLOR0;
+};
+
+//顶点插值的中间数据
+struct FVertexFactoryIntermediates
+{
+	/* The Position of the vertex in translated world space */
+	float3 Position;
+
+	/* vertex Color */
+	half4 Color;
+};
+/*
+ * Vertex Shader需要使用相关结构体实现
+ */
+
+//从 VertexInput 转换到中间数据格式
+FVertexFactoryIntermediates GetVertexFactoryIntermediates(FVertexFactoryInput Input)
+{
+	FVertexFactoryIntermediates Intermediates;
+	Intermediates.Position = Input.Position.xyz;
+	Intermediates.Color = half4(0, 0, 0, 1);
+	return Intermediates;
+}
+// 材质Pixel参数 , MaterialPixelParameters 从Material.ush中引入
+FMaterialPixelParameters GetMaterialPixelParameters(FVertexFactoryInterpolantsVSToPS Interpolants, float4 SvPosition)
+{
+	FMaterialPixelParameters Result = MakeInitializedMaterialPixelParameters();
+	
+#if NUM_TEX_COORD_INTERPOLATORS
+	UNROLL
+	for (int CoordinateIndex = 0; CoordinateIndex < NUM_TEX_COORD_INTERPOLATORS; CoordinateIndex++)
+	{
+		Result.TexCoords[CoordinateIndex] = Interpolants.DummyTexCoord;
+	}
+#endif	//NUM_MATERIAL_TEXCOORDS
+
+	Result.VertexColor = Interpolants.Color;
+	Result.TwoSidedSign = 1;
+	return Result;
+}
+// 材质Vertex参数 , MaterialVertexParameters 从Material.ush中引入
+FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, float3 WorldPosition, half3x3 TangentToLocal)
+{
+	FMaterialVertexParameters Result = MakeInitializedMaterialVertexParameters();
+	Result.WorldPosition = WorldPosition;
+	Result.VertexColor = Intermediates.Color;
+	Result.TangentToWorld = mul(TangentToLocal , GetLocalToWorld3x3());
+	return Result;
+}
+// 从VertexFactoryIntermediates中获取世界坐标
+float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+	return TransformLocalToTranslatedWorld(Intermediates.Position);
+}
+float4 VertexFactoryGetRasterizedWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, float4 InWorldPosition)
+{
+	return InWorldPosition;
+}
+// VS 最终插值到 PS 的数据
+FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, FMaterialVertexParameters VertexParameters)
+{
+	FVertexFactoryInterpolantsVSToPS Interpolants ;
+	Interpolants.DummyTexCoord = float2(0,0);//VertexParameters.TexCoords[0];
+	Interpolants.Color = VertexParameters.VertexColor;
+	return Interpolants;
+}
+//返回上一帧的位置，先直接返回WorldPosition
+float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+	return VertexFactoryGetPreviousWorldPosition(Input , Intermediates);
+}
+
+half3x3 VertexFactoryGetTangentToLocal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+	float3x3 TangentToLocal  = {1,0,0,
+								0,1,0,
+								0,0,1};
+	return TangentToLocal;
+}
+float3 VertexFactoryGetWorldNormal(FVertexFactoryInput Input , FVertexFactoryIntermediates Intermediates)
+{
+	float3 Normal = {0,0,1};
+	return Normal;
+}
