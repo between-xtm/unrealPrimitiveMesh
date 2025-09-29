@@ -1,25 +1,38 @@
 #pragma once
-#include "CoreMinimal.h"
 
+#include "CoreMinimal.h"
+#include "Components/MeshComponent.h"
 #include "CustomPrimitiveComponent.generated.h"
 
-UCLASS(Blueprintable , meta = (BlueprintSpawnableComponent) , ClassGroup = Rendering)
+UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = Rendering)
 class CUSTOMMESH_API UCustomPrimitiveComponent : public UMeshComponent
 {
 	GENERATED_BODY()
+
 public:
-	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category="CustomPrimitiveMesh")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="CustomPrimitiveMesh")
 	bool bIsVisible;
 
 	/*Change the Visibility Setting*/
-	UFUNCTION(BlueprintCallable , Category="CustomPrimitiveMesh")
+	UFUNCTION(BlueprintCallable, Category="CustomPrimitiveMesh")
 	void SetIsVisible(bool bNewVisible);
 
-	UPROPERTY(EditAnywhere , Category="CustomPrimitiveMesh")
+	UPROPERTY(EditAnywhere, Category="CustomPrimitiveMesh")
 	UStaticMesh* StaticMesh;
 
-	UPROPERTY(EditAnywhere , Category="CustomPrimitiveMesh")
+	UPROPERTY(EditAnywhere, Category="CustomPrimitiveMesh")
 	TObjectPtr<UMaterialInterface> Material;
+
+	/** Uniquely identifies this component`s build map data */
+	UPROPERTY()
+	FGuid MapBuildDataId;
+
+	UPROPERTY()
+	FGuid StateId;
+
+	const FMeshMapBuildData* GetMeshMapBuildData();
+
+	virtual void PostInitProperties() override;
 
 private:
 	//~ Begin UPrimitiveComponent Interface.

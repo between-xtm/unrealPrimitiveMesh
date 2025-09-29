@@ -7,7 +7,8 @@
 void FCustomMeshModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	FString PluginShaderDir = FPaths::Combine(IPluginManager::Get().FindPlugin(TEXT("CustomMesh"))->GetBaseDir(), TEXT("Shaders"));
+	FString PluginShaderDir = FPaths::Combine(IPluginManager::Get().FindPlugin(TEXT("CustomMesh"))->GetBaseDir(),
+	                                          TEXT("Shaders"));
 	AddShaderSourceDirectoryMapping(TEXT("/CustomMesh"), PluginShaderDir);
 }
 
@@ -18,5 +19,5 @@ void FCustomMeshModule::ShutdownModule()
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FCustomMeshModule, CustomMesh)
